@@ -93,7 +93,7 @@ static char *mel_get_directory(void)
 
 static void _mel_unsupported_platform(void)
 {
-	MEL_ERROR("Unsupported platform.");
+	mel_error("Unsupported platform.");
 }
 
 static char *mel_get_path(void)
