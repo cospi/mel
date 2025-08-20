@@ -7,10 +7,20 @@
 	#endif // _POSIX_C_SOURCE
 #endif // __linux__
 
-#ifndef MEL_ERROR
+#ifndef mel_error
 	#include <stdio.h>
-	#define MEL_ERROR(_mel_error) fputs(_mel_error "\n", stderr)
-#endif // MEL_ERROR
+	#define mel_error(_mel_error) fputs(_mel_error "\n", stderr)
+#endif // mel_error
+
+#ifndef mel_alloc
+	#include <stdlib.h>
+	#define mel_alloc malloc
+#endif // mel_alloc
+
+#ifndef mel_free
+	#include <stdlib.h>
+	#define mel_free free
+#endif // mel_free
 
 #ifdef __linux__
 
@@ -21,16 +31,16 @@
 
 static char *_mel_linux_get_path_and_length(ssize_t *out_length)
 {
-	char *path = malloc(PATH_MAX);
+	char *path = mel_alloc(PATH_MAX);
 	if (path == NULL) {
-		MEL_ERROR("malloc failed.");
+		mel_error("Memory allocation failed.");
 		return NULL;
 	}
 
 	ssize_t length = readlink("/proc/self/exe", path, PATH_MAX- 1);
 	if (length <= 0) {
-		MEL_ERROR("readlink failed.");
-		free(path);
+		mel_error("readlink failed.");
+		mel_free(path);
 		return NULL;
 	}
 
@@ -66,8 +76,8 @@ static char *mel_get_directory(void)
 
 	ssize_t separator_index = _mel_linux_get_directory_separator_index(directory, length);
 	if (separator_index == -1) {
-		MEL_ERROR("Getting separator index failed.");
-		free(directory);
+		mel_error("Getting separator index failed.");
+		mel_free(directory);
 		return NULL;
 	}
 
