@@ -3,7 +3,7 @@
 OUT := mel
 CC := gcc
 CFLAGS += \
-	-std=c11 \
+	-ansi \
 	-Werror \
 	-Waddress \
 	-Wall \

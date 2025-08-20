@@ -4,27 +4,27 @@
 #ifdef __linux__
 	#ifndef _POSIX_C_SOURCE
 		#define _POSIX_C_SOURCE 200112L
-	#endif // _POSIX_C_SOURCE
-#endif // __linux__
+	#endif
+#endif
 
 #ifndef mel_error
 	#include <stdio.h>
 	#define mel_error(_mel_error) fputs(_mel_error "\n", stderr)
-#endif // mel_error
+#endif
 
 #ifndef mel_alloc
 	#include <stdlib.h>
 	#define mel_alloc malloc
-#endif // mel_alloc
+#endif
 
 #ifndef mel_free
 	#include <stdlib.h>
 	#define mel_free free
-#endif // mel_free
+#endif
 
-// --------------------------------------------------------------------------------------------------------------------
-#ifdef __linux__
-// --------------------------------------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------------------------- */
+#if defined(__linux__)
+/* ----------------------------------------------------------------------------------------------------------------- */
 
 #include <unistd.h>
 #include <linux/limits.h>
@@ -33,13 +33,16 @@
 
 static char *_mel_linux_get_path_and_length(ssize_t *out_length)
 {
-	char *path = mel_alloc(PATH_MAX);
+	char *path;
+	ssize_t length;
+
+	path = mel_alloc(PATH_MAX);
 	if (path == NULL) {
 		mel_error("Memory allocation failed.");
 		return NULL;
 	}
 
-	ssize_t length = readlink("/proc/self/exe", path, PATH_MAX- 1);
+	length = readlink("/proc/self/exe", path, PATH_MAX- 1);
 	if (length <= 0) {
 		mel_error("readlink failed.");
 		mel_free(path);
@@ -53,7 +56,9 @@ static char *_mel_linux_get_path_and_length(ssize_t *out_length)
 
 static ssize_t _mel_linux_get_directory_separator_index(const char *path, ssize_t length)
 {
-	for (ssize_t i = length - 1; i >= 0; --i) {
+	ssize_t i;
+
+	for (i = length - 1; i >= 0; --i) {
 		if (path[i] == '/') {
 			return i;
 		}
@@ -71,12 +76,15 @@ static char *mel_get_path(void)
 static char *mel_get_directory(void)
 {
 	ssize_t length;
-	char *directory = _mel_linux_get_path_and_length(&length);
+	char *directory;
+	ssize_t separator_index;
+
+	directory = _mel_linux_get_path_and_length(&length);
 	if (directory == NULL) {
 		return NULL;
 	}
 
-	ssize_t separator_index = _mel_linux_get_directory_separator_index(directory, length);
+	separator_index = _mel_linux_get_directory_separator_index(directory, length);
 	if (separator_index == -1) {
 		mel_error("Getting separator index failed.");
 		mel_free(directory);
@@ -87,28 +95,32 @@ static char *mel_get_directory(void)
 	return directory;
 }
 
-// --------------------------------------------------------------------------------------------------------------------
-#elif _WIN32
-// --------------------------------------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------------------------- */
+#elif defined(_WIN32)
+/* ----------------------------------------------------------------------------------------------------------------- */
 
 #include <Windows.h>
 
 static char *_mel_windows_get_path_and_length(size_t *out_length)
 {
-	char *path = mel_alloc(MAX_PATH);
+	char *path;
+	DWORD length;
+	size_t i;
+
+	path = mel_alloc(MAX_PATH);
 	if (path == NULL) {
 		mel_error("Memory allocation failed.");
 		return NULL;
 	}
 
-	DWORD length = GetModuleFileNameA(NULL, path, MAX_PATH);
+	length = GetModuleFileNameA(NULL, path, MAX_PATH);
 	if (length == 0) {
 		mel_error("GetModuleFileNameA failed.");
 		mel_free(path);
 		return NULL;
 	}
 
-	for (size_t i = 0; i < length; ++i) {
+	for (i = 0; i < length; ++i) {
 		if (path[i] == '\\') {
 			path[i] = '/';
 		}
@@ -121,7 +133,9 @@ static char *_mel_windows_get_path_and_length(size_t *out_length)
 
 static int _mel_windows_get_directory_separator_index(const char *path, size_t length)
 {
-	for (int i = (int)length - 1; i >= 0; --i) {
+	int i;
+
+	for (i = (int)length - 1; i >= 0; --i) {
 		char character = path[i];
 		if (character == '/') {
 			return i;
@@ -140,12 +154,15 @@ static char *mel_get_path(void)
 static char *mel_get_directory(void)
 {
 	size_t length;
-	char *directory = _mel_windows_get_path_and_length(&length);
+	char *directory;
+	int separator_index;
+
+	directory = _mel_windows_get_path_and_length(&length);
 	if (directory == NULL) {
 		return NULL;
 	}
 
-	int separator_index = _mel_windows_get_directory_separator_index(directory, length);
+	separator_index = _mel_windows_get_directory_separator_index(directory, length);
 	if (separator_index == -1) {
 		mel_error("Getting separator index failed.");
 		mel_free(directory);
@@ -156,9 +173,9 @@ static char *mel_get_directory(void)
 	return directory;
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------------------------- */
 #else
-// --------------------------------------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------------------------- */
 
 static void _mel_unsupported_platform(void)
 {
@@ -177,8 +194,8 @@ static char *mel_get_directory(void)
 	return NULL;
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------------------------- */
 #endif
-// --------------------------------------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------------------------- */
 
-#endif // MEL_H_
+#endif
