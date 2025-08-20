@@ -88,6 +88,75 @@ static char *mel_get_directory(void)
 }
 
 // --------------------------------------------------------------------------------------------------------------------
+#elif _WIN32
+// --------------------------------------------------------------------------------------------------------------------
+
+#include <Windows.h>
+
+static char *_mel_windows_get_path_and_length(size_t *out_length)
+{
+	char *path = mel_alloc(MAX_PATH);
+	if (path == NULL) {
+		mel_error("Memory allocation failed.");
+		return NULL;
+	}
+
+	DWORD length = GetModuleFileNameA(NULL, path, MAX_PATH);
+	if (length == 0) {
+		mel_error("GetModuleFileNameA failed.");
+		mel_free(path);
+		return NULL;
+	}
+
+	for (size_t i = 0; i < length; ++i) {
+		if (path[i] == '\\') {
+			path[i] = '/';
+		}
+	}
+
+	path[length] = '\0';
+	*out_length = length;
+	return path;
+}
+
+static int _mel_windows_get_directory_separator_index(const char *path, size_t length)
+{
+	for (int i = (int)length - 1; i >= 0; --i) {
+		char character = path[i];
+		if (character == '/') {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+static char *mel_get_path(void)
+{
+	size_t length;
+	return _mel_windows_get_path_and_length(&length);
+}
+
+static char *mel_get_directory(void)
+{
+	size_t length;
+	char *directory = _mel_windows_get_path_and_length(&length);
+	if (directory == NULL) {
+		return NULL;
+	}
+
+	int separator_index = _mel_windows_get_directory_separator_index(directory, length);
+	if (separator_index == -1) {
+		mel_error("Getting separator index failed.");
+		mel_free(directory);
+		return NULL;
+	}
+
+	directory[separator_index + 1] = '\0';
+	return directory;
+}
+
+// --------------------------------------------------------------------------------------------------------------------
 #else
 // --------------------------------------------------------------------------------------------------------------------
 
