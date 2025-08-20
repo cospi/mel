@@ -2,28 +2,34 @@
 #define MEL_H_
 
 #ifdef __linux__
+	#ifndef _POSIX_C_SOURCE
+		#define _POSIX_C_SOURCE 200112L
+	#endif // _POSIX_C_SOURCE
+#endif // __linux__
 
-#ifndef _POSIX_C_SOURCE
-	#define _POSIX_C_SOURCE 200112L
-#endif
+#ifndef MEL_ERROR
+	#include <stdio.h>
+	#define MEL_ERROR(_mel_error) fputs(_mel_error "\n", stderr)
+#endif // MEL_ERROR
+
+#ifdef __linux__
 
 #include <unistd.h>
 #include <linux/limits.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 
 static char *_mel_linux_get_path_and_length(ssize_t *out_length)
 {
 	char *path = malloc(PATH_MAX);
 	if (path == NULL) {
-		fputs("malloc failed.\n", stderr);
+		MEL_ERROR("malloc failed.");
 		return NULL;
 	}
 
 	ssize_t length = readlink("/proc/self/exe", path, PATH_MAX- 1);
 	if (length <= 0) {
-		fputs("readlink failed.\n", stderr);
+		MEL_ERROR("readlink failed.");
 		free(path);
 		return NULL;
 	}
@@ -60,7 +66,7 @@ static char *mel_get_directory(void)
 
 	ssize_t separator_index = _mel_linux_get_directory_separator_index(directory, length);
 	if (separator_index == -1) {
-		fputs("Getting separator index failed.\n", stderr);
+		MEL_ERROR("Getting separator index failed.");
 		free(directory);
 		return NULL;
 	}
@@ -71,11 +77,9 @@ static char *mel_get_directory(void)
 
 #else
 
-#include <stdio.h>
-
 static void _mel_unsupported_platform(void)
 {
-	puts("Unsupported platform.");
+	MEL_ERROR("Unsupported platform.");
 }
 
 static char *mel_get_path(void)
