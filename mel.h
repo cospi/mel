@@ -2,6 +2,7 @@
 #define MEL_H_
 
 #ifdef __linux__
+	// _POSIX_C_SOURCE is required by readlink.
 	#ifndef _POSIX_C_SOURCE
 		#define _POSIX_C_SOURCE 200112L
 	#endif
@@ -36,7 +37,8 @@ static char *_mel_linux_get_path_and_length(ssize_t *out_length)
 	char *path;
 	ssize_t length;
 
-	path = mel_alloc(PATH_MAX);
+	// Cast to be compatible with C++.
+	path = (char *)mel_alloc(PATH_MAX);
 	if (path == NULL) {
 		mel_error("Memory allocation failed.");
 		return NULL;
@@ -107,7 +109,8 @@ static char *_mel_windows_get_path_and_length(size_t *out_length)
 	DWORD length;
 	size_t i;
 
-	path = mel_alloc(MAX_PATH);
+	// Cast to be compatible with C++.
+	path = (char *)mel_alloc(MAX_PATH);
 	if (path == NULL) {
 		mel_error("Memory allocation failed.");
 		return NULL;
